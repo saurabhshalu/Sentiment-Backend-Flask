@@ -77,8 +77,11 @@ def to_json(c, o):
     attr_list = dir(c)
     obj = {}
     for item in attr_list:
-        if not item.startswith('_') and not item.startswith('query') and item != 'metadata':
+        if not item.startswith('_') and not item.startswith('query') and item != 'metadata' and not item.endswith('tweet1') and not item.endswith('tweet2'):
             item_val = getattr(o,item)
             if item_val != None:
                 obj[item] = item_val
+    
+    obj['positive_tweets'] = [o.pos_tweet1, o.pos_tweet2]
+    obj['negative_tweets'] = [o.neg_tweet1, o.neg_tweet2]
     return jsonify(obj)
