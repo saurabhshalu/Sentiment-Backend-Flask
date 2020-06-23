@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import urllib
+from flask import jsonify
 
 import preprocessor as p
 
@@ -69,3 +70,15 @@ def monthret(x):
         return 'Nov'
     if x==12:
         return 'Dec'
+
+
+
+def to_json(c, o):
+    attr_list = dir(c)
+    obj = {}
+    for item in attr_list:
+        if not item.startswith('_') and not item.startswith('query') and item != 'metadata':
+            item_val = getattr(o,item)
+            if item_val != None:
+                obj[item] = item_val
+    return jsonify(obj)

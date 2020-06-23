@@ -3,22 +3,13 @@ from flask import Flask, request, jsonify
 from twitter_client import TwitterClient
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from functions import word_cloud
-import json
+from functions import word_cloud, to_json
+import inspect
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 
 db = SQLAlchemy(app)
-
-#from models import SearchResult
-
-# con = sqlite3.connect("tweet_response.db")
-# con.execute('create table ')
-
-# class User(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(50))
-
 
 class SearchResult(db.Model):
     hashtag = db.Column(db.String(100), primary_key=True)
@@ -34,9 +25,6 @@ class SearchResult(db.Model):
     tweet_count = db.Column(db.Integer)
     positive_wcloud = db.Column(db.String(10000000))
     negative_wcloud = db.Column(db.String(10000000))
-
-
-
 
 @app.route('/')
 def home():
@@ -54,7 +42,7 @@ def simple_request(hashtag):
 
         time_diff = (curr_time - old_time).total_seconds()//60
         if time_diff < 1:
-            return str(db_result.datetime) + ' from db'
+            return to_json(SearchResult, db_result)
         else:
             update = True
     
@@ -103,39 +91,23 @@ def simple_request(hashtag):
 
     
     if update == True:
-        db_results.datetime = datetime.now()
-        db_results.tweet_count = response_object.tweet_count
-        db_results.positive = response_object.positive
-        db_results.negative = response_object.negative
-        db_results.positive_wcloud = response_object.positive_wcloud
-        db_results.negative_wcloud = response_object.negative_wcloud
-        db_results.pos_tweet1 = response_object.pos_tweet1 or None
-        db_results.pos_tweet2 = response_object.pos_tweet2 or None
-        db_results.neg_tweet1 = response_object.neg_tweet1 or None
-        db_results.neg_tweet2 = response_object.neg_tweet2 or None
+        db_result.datetime = datetime.now()
+        db_result.tweet_count = response_object.tweet_count
+        db_result.positive = response_object.positive
+        db_result.negative = response_object.negative
+        db_result.positive_wcloud = response_object.positive_wcloud
+        db_result.negative_wcloud = response_object.negative_wcloud
+        db_result.pos_tweet1 = response_object.pos_tweet1 or None
+        db_result.pos_tweet2 = response_object.pos_tweet2 or None
+        db_result.neg_tweet1 = response_object.neg_tweet1 or None
+        db_result.neg_tweet2 = response_object.neg_tweet2 or None
         db.session.commit()
-        print('updating!')
     else:
-        print('new value')
         db.session.add(response_object)
         db.session.commit()
-    return str(response_object.datetime) # 'json.dumps(response_object.__dict__)'
 
+    return to_json(SearchResult, response_object)
 
-# @app.route('/insert/<name>')
-# def insert(name):
-#     user = User(name=name)
-#     db.session.add(user)
-#     db.session.commit()
-#     return 'Inserted successfully!'
-
-# @app.route('/view')
-# def viewdata():
-#     users = User.query.all()
-#     data = {}
-#     for user in users:
-#         data[user.id] = user.name
-#     return jsonify(data)
 
 if __name__ == "__main__":
     app.run(debug=True)
